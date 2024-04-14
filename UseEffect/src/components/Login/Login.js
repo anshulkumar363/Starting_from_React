@@ -1,56 +1,68 @@
-import React, { useState,useEffect } from 'react';
+import React, { useState,useEffect,useReducer } from 'react';
 
 import Card from '../UI/Card/Card';
 import classes from './Login.module.css';
 import Button from '../UI/Button/Button';
 
+const passwordReducer=(state,action)=>{
+  if(action.type ==='USER_INPUT'){
+    return {value:action.val, isValid:action.val.includes('@')}
+  }
+  if(action.type === 'INPUT_BLUR'){
+    return {value:state.value,isValid: state.value.includes('@')};
+  }
+   return {value:'',isValid: false};
+};
 const Login = (props) => {
   const [enteredEmail, setEnteredEmail] = useState('');
   const [emailIsValid, setEmailIsValid] = useState();
-  const [enteredPassword, setEnteredPassword] = useState('');
-  const [passwordIsValid, setPasswordIsValid] = useState();
-  const [enteredCollege, setEnteredCollege]=useState('');
-  const [collegeIsValid, setCollegeIsValid]=useState();
+  // const [enteredPassword, setEnteredPassword] = useState('');
+  // const [passwordIsValid, setPasswordIsValid] = useState();
   const [formIsValid, setFormIsValid] = useState(false);
 
+  const[passwordState, dispatchPassword]=useReducer(passwordReducer,
+    {value:'',isValid: false}
+  );
 
-  useEffect(()=>{
-    const identifier=setTimeout(()=>{
-      setFormIsValid(
-        enteredEmail.includes('@') && enteredPassword.trim().length > 6 && enteredCollege.trim().length >5
-      );
-    },500);
-    return ()=>{
-      clearTimeout(identifier);
-    };
-  },[setFormIsValid,enteredEmail,enteredPassword,enteredCollege])
+
+  // useEffect(()=>{
+  //   const identifier=setTimeout(()=>{
+  //     setFormIsValid(
+  //       enteredEmail.includes('@') && enteredPassword.trim().length > 6 && enteredCollege.trim().length >5
+  //     );
+  //   },500);
+  //   return ()=>{
+  //     clearTimeout(identifier);
+  //   };
+  // },[setFormIsValid,enteredEmail,enteredPassword,enteredCollege])
 
   const emailChangeHandler = (event) => {
     setEnteredEmail(event.target.value); 
+    setFormIsValid(
+      event.target.value.includes('@') && passwordState.isValid
+    )
   };
 
   const passwordChangeHandler = (event) => {
-    setEnteredPassword(event.target.value);
+    dispatchPassword({type:'USER_INPUT', val:event.target.value})
+    setFormIsValid(
+      enteredEmail.includes('@') && event.target.value.trim().length>6
+    )
   };
 
-  const collegeChangeHandler= event=>{
-    setEnteredCollege(event.target.value);
-    
-  }
+  
   const validateEmailHandler = () => {
-    setEmailIsValid(enteredEmail.includes('@'));
+    setEmailIsValid(passwordState.isValid);
   };
 
   const validatePasswordHandler = () => {
-    setPasswordIsValid(enteredPassword.trim().length > 6);
+    dispatchPassword({type:'INPUT_BLUR'})
   };
-  const validateCollegeHandler= ()=>{
-    setCollegeIsValid(enteredCollege.trim().length>5);
-  }
+  
 
   const submitHandler = (event) => {
     event.preventDefault();
-    props.onLogin(enteredEmail, enteredPassword, enteredCollege);
+    props.onLogin(enteredEmail, passwordState.value);
   };
 
   return (
@@ -72,30 +84,16 @@ const Login = (props) => {
         </div>
         <div
           className={`${classes.control} ${
-            passwordIsValid === false ? classes.invalid : ''
+            passwordState.isValid === false ? classes.invalid : ''
           }`}
         >
           <label htmlFor="password">Password</label>
           <input
             type="password"
             id="password"
-            value={enteredPassword}
+            value={passwordState.value}
             onChange={passwordChangeHandler}
             onBlur={validatePasswordHandler}
-          />
-        </div>
-        <div
-          className={`${classes.control} ${
-            collegeIsValid === false ? classes.invalid : ''
-          }`}
-        >
-          <label htmlFor="college">College</label>
-          <input
-            type="college"
-            id="college"
-            value={enteredCollege}
-            onChange={collegeChangeHandler}
-            onBlur={validateCollegeHandler}
           />
         </div>
         <div className={classes.actions}>
